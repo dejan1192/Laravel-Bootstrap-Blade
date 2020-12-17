@@ -4,11 +4,10 @@
 
 @section('content')
 
-<div class="card p-3">
-    <div class="row">
-        
-      
-    </div>
+<div class="card p-2">
+    
+<div class="p-3 mb-3">
+   
     <div class="row ">
         <div class="col-3">
             @if ($user->image)
@@ -33,7 +32,7 @@
     @endcan
 
 
-        <form action="{{route('profile.follow')}}" id="follow-form" method='POST' class="d-none">
+        <form action="{{route('users.follow')}}" id="follow-form" method='POST' class="d-none">
             @csrf
             <input type="hidden" name="user_id" value='{{$user->id}}'>
         </form>
@@ -54,35 +53,43 @@
         </div>
     </div>
 </div>
+<hr>
 
-<div class="p-2 ">
-   @if(Auth::id() === $user->id)
-     <button onclick="document.getElementById('profile_image').click()" class="btn btn-info text-white">Upload Profile Image</button>
-   @endif
 
-<form class='d-none' id='profile-upload' action="{{route('profile.upload')}}" enctype="multipart/form-data" method="post">
-    @csrf
-        <input 
-        onchange="document.getElementById('profile-upload').submit()"
-        type="file" 
-        name="profile_image" 
-        id="profile_image">
-    </form>
+@can('update', $user)
+    
+<div class="row  p-0 bg-dark mb-3">
+    <div class="col-3 p-1 text-center">
+        <a class="text-white" href="{{ route('users.edit', $user) }}"><i class="fas fa-user-edit"></i> Edit profile</a>
+    </div>
+
+    <div class="col-3 p-1 text-center">
+        <a class="text-white" href="{{ route('posts.create') }}"><i class="fas fa-plus-circle"></i> Create new post</a>
+    </div>
 </div>
+@endcan
+
 
 <div class="row">
-
+    
    <div class="col-6 p-3">
     @if($user->blogPosts->count() > 0)
 
         @foreach($user->blogPosts as $post)
-            <div class="card p-3 mb-2">
-                <h5 class="card-title">
-                <a href="{{route('posts.show', $post->id)}}">{{$post->title}}</a>
-                </h5>
-                <div class="card-text">
-                    {{$post->content}}
-                </div>
+            <div class="card p-1 mb-2">
+              <div class="row">
+                  <div class="col-4">
+                      <img src="{{ $post->image->url() }}" class="img-fluid" alt="img">
+                  </div>
+                  <div class="col-8">
+                    <h5 class="card-title">
+                        <a href="{{route('posts.show', $post->id)}}">{{$post->title}}</a>
+                        </h5>
+                        <div class="card-text">
+                            {{$post->content}}
+                        </div>
+                  </div>
+              </div>
             </div>
         @endforeach
 
@@ -94,7 +101,7 @@
        <h4>Recent Followers</h4>
         @if($recentFollowers->count() > 0)
             @foreach($recentFollowers as $follower)
-                <li><a href="{{route('profile.index', $follower->id)}}">{{$follower->name}}</a></li>
+                <li><a href="{{route('users.show', $follower->id)}}">{{$follower->name}}</a></li>
             @endforeach
         @endif
    </div>
@@ -115,7 +122,7 @@
                <ul class="list-group">
                 @foreach($followers as $follower)
                 <li class="list-group-item">
-                    <a href="{{route('profile.index', $follower->id)}}">
+                    <a href="{{route('users.show', $follower->id)}}">
                         {{$follower->name}}
                     </a>
                 </li>
@@ -133,5 +140,6 @@
       </div>
     </div>
   </div>
+</div>
 
 @endsection

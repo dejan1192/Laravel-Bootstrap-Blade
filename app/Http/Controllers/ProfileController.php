@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserAvatar;
+use App\Models\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Services\Follows;
 use Illuminate\Support\Facades\Gate;
 
 class ProfileController extends Controller
@@ -16,40 +19,50 @@ class ProfileController extends Controller
     
     public function index($userId)
     {
-      
+      dd($userId);
         
-        $user = User::with(['blogPosts', 'comments'])->withCount('blogPosts')->findOrFail($userId);
+        $user = User::with(['blogPosts', 'comments' => function($query){
+            return $query->latest();
+        }])->withCount('blogPosts')->findOrFail($userId);
         
-        $followers_count = User::withCount('followers')->find($userId)->followers_count;
+        $userFollows = new Follows($userId);
 
-        $followers = User::with('followers')->find($userId)->followers;
+        $followers_count = $userFollows->followerCount();
 
-        $recentFollowers = User::with('followers')->latest()->take(3)->findOrFail($userId)->followers;
-   
-       
-        $followed = $followers->first(function($follower){
-            return $follower->id === Auth::id();
-        });
+        $followers =$userFollows->followers();
+
+        $recentFollowers = $userFollows->recentFollowers(3);
+
+        $followed = $userFollows->isFollowedBy(Auth::id());
    
         
 
        return view('profile.index', compact(['user', 'followers', 'followers_count', 'followed', 'recentFollowers']));
     }
 
-    public function uploadImage(Request $request)
+    public function uploadImage(StoreUserAvatar $request)
     {
        
-        $filenameWithExt = $request->file('profile_image')->getClientOriginalName();
-        $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-        $extension = $request->file('profile_image')->getClientOriginalExtension();
-        $newFileName = 'profile_'.$filename.time().'.'.$extension;
-        $request->file('profile_image')->storeAs('public/profile-images', $newFileName);
+     
+        $path = $request->file('profile_image')->store('profile-images');
 
         $user = User::findOrFail(Auth::id());
-        $user->profile_image = $newFileName;
+        if($user->image){
+          
+            $user->image->path = $path;
+            $user->image->save();
+          
+        }else{
+            $user->image()->save(
+                Image::make([
+                    'path' => $path
+                ])
+                );
+        }
         $user->save();
+        
 
-        return redirect()->route('profile.index', $user->id);
+        return redirect()->back();
 
         
         

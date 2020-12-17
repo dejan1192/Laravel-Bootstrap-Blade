@@ -5,11 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class BlogPost extends Model
 {
     use HasFactory;
 
+
+    public function scopeWithRelations(Builder $query){
+
+        return $query->with(['tags'])->withCount('comments');
+
+        
+    }
 
     public function scopeLatest(Builder $query)
     {
@@ -28,6 +36,11 @@ class BlogPost extends Model
 
     public function tags()
     {
-        return $this->belongsToMany('App\Models\Tag')->withTimestamps()->as('tagged');
+        return $this->belongsToMany('App\Models\Tag')->withTimestamps();
+    }
+
+    public function image(){
+
+        return $this->morphOne('App\Models\Image', 'imageable');
     }
 }

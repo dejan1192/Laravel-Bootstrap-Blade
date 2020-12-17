@@ -5,30 +5,29 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href={{asset('css/app.css')}}>
     <script src="{{asset('js/app.js')}}"></script>
+    <script src="https://kit.fontawesome.com/f71c144e43.js" crossorigin="anonymous"></script>
         <title>Laravel</title>
 
         <!-- Fonts -->
         {{-- <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"> --}}
     </head>
-    <body class="container">
-        <div class="navbar navbar-expand-lg mb-4">
+    <body >
+        <div class="navbar navbar-expand-lg mb-4 navbar-dark bg-dark">
           
-             
+             <div class="container">
+                 
               <ul class="navbar-nav mr-auto">
-              @auth
-              <li class='nav-item' >
-                <a  class='nav-link' href="{{route('index')}}">Posts</a>
-                </li>   
-                <li class='nav-item'><a class='nav-link'  href="{{route('profile.index', Auth::user()->id)}}">Profile</a></li>
-                <li class="nav-item">
-                <a href="{{route('posts.create')}}" class="nav-link">
-                    Create Post
-                </a>
-                </li>
-              @endauth
-              
+                @auth
+                <li class='nav-item' >
+                  <a  class='nav-link' href="{{route('index')}}"><i class="fas fa-home"></i> Home</a>
+                  </li>   
+                  <li class='nav-item'><a class='nav-link'  href="{{route('users.show', Auth::user()->id)}}"><i class="fas fa-user-alt"></i> Profile</a></li>
+                 
+                @endauth
                 
-              </ul>
+                  
+                </ul>
+             </div>
            
              @auth
              <div class="right">
@@ -41,6 +40,9 @@
                     @csrf
               </form>
           </div>
-       @yield('content')
+          <div class="container">
+            @yield('content')
+          </div>
+      
     </body>
 </html>

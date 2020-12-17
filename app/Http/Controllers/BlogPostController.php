@@ -6,8 +6,10 @@ use App\Http\Requests\StoreBlogPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Models\BlogPost;
-use Illuminate\Database\Query\Builder;
+use App\Models\Image;
+use App\Models\Tag;
 use App\Models\User;
+use App\Services\Follows;
 use Illuminate\Support\Facades\Auth;
 
 class BlogPostController extends Controller
@@ -23,15 +25,12 @@ class BlogPostController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {   $following = User::with('followers')->find(Auth::id())->followees;
+    {  
+        $userFollows = new Follows(Auth::id());
 
-      
-        $allUsers = User::where('id','!=', Auth::id())->take(6)->get();
-    
-       $notFollowed = $allUsers->diff($following);
-    
-       $peopleYouMightKnow = $notFollowed->all();
-  
+        $following = $userFollows->following();
+
+        $peopleYouMightKnow =$userFollows->peopleYouMightKnow();
      
         $posts = BlogPost::with('tags')
         ->latest()
@@ -43,7 +42,7 @@ class BlogPostController extends Controller
         $recentPosts = BlogPost::with('user')->latest()->take(3)->get();
         
 
-        return view('welcome', compact('posts','recentPosts', 'peopleYouMightKnow'));
+        return view('welcome', compact('posts','recentPosts', 'peopleYouMightKnow', 'following'));
     }
 
     /**
@@ -53,8 +52,8 @@ class BlogPostController extends Controller
      */
     public function create()
     {
-        
-        return view('post.create');
+        $tags = Tag::all();
+        return view('post.create', compact('tags'));
     }
 
     /**
@@ -66,28 +65,35 @@ class BlogPostController extends Controller
     public function store(StoreBlogPost $request)
     {
         
+        
         $validatedData = $request->validated();
-       if($request->hasfile('image'))
-        {
-            $filenameWithExt = $request->file('image')->getClientOriginalName();
-            $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-         
-            $extension = $request->file('image')->extension();
-          
-            $newFileName = $filename .time().'.'.$extension;
-            $path = $request->file('image')->storeAs('public/post-images', $newFileName);
-        }else{
-            $newFileName = 'noimage.jpg';
-        }
+     
 
     
         $post = new BlogPost();
         $post->title = $validatedData['title'];
         $post->content = $validatedData['content'];
         $post->user_id = Auth::id();
-        $post->image = $newFileName;
+       
         $post->save();
 
+        if($request->hasfile('image'))
+        {
+          
+            $path = $request->file('image')->store('post-images');
+            $post->image()->save(
+                Image::make([
+                    'path' => $path
+                ])
+                );
+            
+            
+        }
+
+       
+        
+
+        $post->tags()->sync($request->input('tags'));
         return redirect()->route('index');
 
 

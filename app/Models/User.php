@@ -84,4 +84,9 @@ class User extends Authenticatable
     {
         return !! $this->followees()->where('follower_id', $user->id)->count();
     }
+
+    public function image(){
+
+        return $this->morphOne('App\Models\Image', 'imageable');
+    }
 }
